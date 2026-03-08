@@ -45,6 +45,7 @@ pub struct AppSettings {
     pub privacy_auto_enable: bool,
     pub auto_update_check: bool,
     pub auto_start_enabled: bool,
+    pub mail_cx_api_key: Option<String>,
 }
 
 impl Default for AppSettings {
@@ -55,6 +56,7 @@ impl Default for AppSettings {
             privacy_auto_enable: true,
             auto_update_check: true,
             auto_start_enabled: false,
+            mail_cx_api_key: None,
         }
     }
 }
@@ -269,13 +271,22 @@ struct MailClient {
 }
 
 impl MailClient {
-    async fn new() -> anyhow::Result<Self> {
+    async fn new(api_key: Option<String>) -> anyhow::Result<Self> {
         let client = Client::builder()
             .user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
             .timeout(Duration::from_secs(30))
             .build()?;
 
-        let token = authorize_mail_token(&client).await?;
+        let token = if let Some(key) = api_key {
+            if key.trim().is_empty() {
+                authorize_mail_token(&client).await?
+            } else {
+                key
+            }
+        } else {
+            authorize_mail_token(&client).await?
+        };
+
         Ok(Self {
             client,
             api_token: token,
@@ -856,7 +867,12 @@ async fn quick_register(app: AppHandle, show_window: bool, state: State<'_, AppS
         return Err(anyhow::anyhow!("浏览器登录正在进行中，请稍后再试").into());
     }
 
-    let mut mail_client = MailClient::new().await.map_err(ApiError::from)?;
+    let api_key = {
+        let settings = state.settings.lock().await;
+        settings.mail_cx_api_key.clone()
+    };
+
+    let mut mail_client = MailClient::new(api_key).await.map_err(ApiError::from)?;
     let email = generate_email_address();
     let password = generate_password();
     mail_client.set_email(email.clone());

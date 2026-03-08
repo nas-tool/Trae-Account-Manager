@@ -99,6 +99,7 @@ export interface AppSettings {
   privacy_auto_enable: boolean;
   auto_update_check: boolean;
   auto_start_enabled: boolean;
+  mail_cx_api_key?: string;
 }
 
 // 用户统计数据

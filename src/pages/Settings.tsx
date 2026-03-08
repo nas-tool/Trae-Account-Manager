@@ -31,6 +31,7 @@ export function Settings({
     []
   );
   const [appSettings, setAppSettings] = useState<AppSettings | null>(settings ?? null);
+  const [apiKeyDraft, setApiKeyDraft] = useState<string | null>(null);
 
   // 加载 Trae IDE 机器码
   const loadTraeMachineId = async () => {
@@ -438,6 +439,44 @@ export function Settings({
               <span className="pill-track"></span>
               <span className="pill-thumb"></span>
             </button>
+          </div>
+        </div>
+
+        <div className="setting-item">
+          <div className="setting-info">
+            <div className="setting-label">Mail.cx API Key</div>
+            <div className="setting-desc">自定义 api.mail.cx 的 API Key，留空则自动获取临时 Key</div>
+          </div>
+          <div className="setting-action">
+            <input
+              type="text"
+              style={{
+                background: "var(--bg-secondary)",
+                border: "1px solid var(--border)",
+                borderRadius: "6px",
+                padding: "6px 10px",
+                color: "var(--text)",
+                width: "240px",
+                fontSize: "13px",
+                outline: "none",
+                transition: "border-color 0.2s",
+              }}
+              onFocus={(e) => (e.target.style.borderColor = "var(--primary)")}
+              onBlur={(e) => {
+                e.target.style.borderColor = "var(--border)";
+                if (apiKeyDraft !== null && apiKeyDraft !== currentSettings.mail_cx_api_key) {
+                  updateSettings(
+                    { mail_cx_api_key: apiKeyDraft },
+                    "已更新 API Key"
+                  );
+                }
+                setApiKeyDraft(null);
+              }}
+              onChange={(e) => setApiKeyDraft(e.target.value)}
+              value={apiKeyDraft ?? currentSettings.mail_cx_api_key ?? ""}
+              placeholder="默认自动获取"
+              disabled={settingsDisabled}
+            />
           </div>
         </div>
 
